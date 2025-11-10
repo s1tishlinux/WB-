@@ -1,0 +1,62 @@
+[
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "What's the weather in New York?"
+      },
+      {
+        "role": "assistant",
+        "content": "Mock Response: Based on your query 'What's the weather in New York?', I analyzed the situation and used tools ['weather']. The results show: {'weather': {'location': \"What's the weather in New York?\", 'temperature': -4, 'condition': 'sunny',... This is a simulated response for testing."
+      }
+    ],
+    "expected_response": "I'll check the weather in New York for you using the weather tool.",
+    "metadata": {
+      "processing_time": 9.884479999542236,
+      "tools_used": [
+        "weather"
+      ],
+      "reasoning_quality": 0.28
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Calculate 25 * 17"
+      },
+      {
+        "role": "assistant",
+        "content": "Mock Response: Based on your query 'Calculate 25 * 17', I analyzed the situation and used tools ['calculator']. The results show: {'calculator': {'error': 'Invalid characters in expression'}}... This is a simulated response for testing."
+      }
+    ],
+    "expected_response": "I'll use the calculator tool to compute 25 * 17 = 425.",
+    "metadata": {
+      "processing_time": 0.9584450721740723,
+      "tools_used": [
+        "calculator"
+      ],
+      "reasoning_quality": 0.252
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Search for Python tutorials"
+      },
+      {
+        "role": "assistant",
+        "content": "Mock Response: Based on your query 'Search for Python tutorials', I analyzed the situation and used tools ['web_search']. The results show: {'web_search': {'results': [{'title': 'Search result for: Search for Python tutorials', 'url': 'http... This is a simulated response for testing."
+      }
+    ],
+    "expected_response": "I'll search for Python programming tutorials using the web search tool.",
+    "metadata": {
+      "processing_time": 0.9154989719390869,
+      "tools_used": [
+        "web_search"
+      ],
+      "reasoning_quality": 0.272
+    }
+  }
+]
