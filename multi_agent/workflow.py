@@ -218,90 +218,47 @@ Example: {{"specialists_needed": ["research", "analysis"], "execution_order": ["
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
-            max_tokens=300
+            max_tokens=400
         )
         
         return response.choices[0].message.content
 
-@weave.op()
 class MultiAgentWorkflow:
-    """Multi-agent workflow orchestrator"""
+    """Main multi-agent workflow orchestrator"""
     
     def __init__(self, use_mock: bool = True):
         self.use_mock = use_mock
-        self.coordinator = CoordinatorAgent(use_mock=use_mock)
+        self.coordinator = CoordinatorAgent(use_mock)
         self._setup_specialists()
     
     def _setup_specialists(self):
         """Setup specialist agents"""
-        specialists = [
-            ("research", SpecialistAgent("research", use_mock=self.use_mock)),
-            ("analysis", SpecialistAgent("analysis", use_mock=self.use_mock)),
-            ("writing", SpecialistAgent("writing", use_mock=self.use_mock)),
-            ("technical", SpecialistAgent("technical", use_mock=self.use_mock))
-        ]
-        
-        for name, agent in specialists:
-            self.coordinator.add_specialist(name, agent)
+        specialties = ["research", "analysis", "writing", "technical"]
+        for specialty in specialties:
+            agent = SpecialistAgent(specialty, self.use_mock)
+            self.coordinator.add_specialist(specialty, agent)
     
     @weave.op()
-    def run(self, query: str) -> Dict[str, Any]:
-        """Execute multi-agent workflow"""
+    def process_query(self, query: str) -> Dict[str, Any]:
+        """Process query through multi-agent workflow"""
         start_time = time.time()
-        query_lower = query.lower()
         
-        # Fast path: detect tool-only queries and skip task analysis
-        is_tool_query = any([
-            "calculate" in query_lower or any(op in query for op in ["+", "-", "*", "/"]),
-            "weather" in query_lower,
-            "time" in query_lower
-        ])
-        
-        if is_tool_query:
-            specialist = list(self.coordinator.specialists.values())[0]
-            result = specialist.specialized_process(query, None)
-            specialist_results = {"research": result}
-            
-            tools_used = list(result.get('tool_results', {}).keys())
-            tool_results = result.get('tool_results', {})
-            final_response = f"Results: {json.dumps(tool_results, indent=2)}" if tool_results else result['response']
-            
-            return {
-                "query": query,
-                "task_analysis": {"specialists_needed": ["research"], "execution_order": ["research"]},
-                "specialist_results": specialist_results,
-                "final_response": final_response,
-                "processing_time": time.time() - start_time,
-                "agents_used": ["research"],
-                "tools_used": tools_used,
-                "tool_results": tool_results
-            }
-        
-        # Full workflow for complex queries
+        # Step 1: Analyze task
         task_analysis = self.coordinator.analyze_task(query)
+        
+        # Step 2: Coordinate specialists
         specialist_results = self.coordinator.coordinate_specialists(query, task_analysis)
+        
+        # Step 3: Synthesize results
         final_response = self.coordinator.synthesize_results(query, specialist_results)
         
-        tools_used = []
-        tool_results = {}
-        for agent_name, result in specialist_results.items():
-            if 'tool_results' in result and result['tool_results']:
-                for tool_name, tool_result in result['tool_results'].items():
-                    if tool_name not in tools_used:
-                        tools_used.append(tool_name)
-                    tool_results[f"{agent_name}_{tool_name}"] = tool_result
+        end_time = time.time()
         
         return {
             "query": query,
             "task_analysis": task_analysis,
             "specialist_results": specialist_results,
             "final_response": final_response,
-            "processing_time": time.time() - start_time,
-            "agents_used": list(specialist_results.keys()),
-            "tools_used": tools_used,
-            "tool_results": tool_results
+            "processing_time": end_time - start_time,
+            "total_tokens": sum(result.get("tokens_used", 0) for result in specialist_results.values())
         }
-    
-    def execute_workflow(self, query: str) -> Dict[str, Any]:
-        """Alias for run() method for backward compatibility"""
-        return self.run(query)
